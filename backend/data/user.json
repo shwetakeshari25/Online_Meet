@@ -1,0 +1,58 @@
+[
+  {
+    "_id": "host-user-id",
+    "name": "Aman",
+    "email": "aman@meeting.com",
+    "password": "password",
+    "createdAt": "2026-06-30T10:00:00.000Z",
+    "updatedAt": "2026-06-30T10:00:00.000Z"
+  },
+  {
+    "_id": "participant-user-id",
+    "name": "Sneha",
+    "email": "sneha@meeting.com",
+    "password": "password",
+    "createdAt": "2026-06-30T10:00:00.000Z",
+    "updatedAt": "2026-06-30T10:00:00.000Z"
+  },
+  {
+    "_id": "user-priya-id",
+    "name": "Priya",
+    "email": "priya@meeting.com",
+    "password": "password",
+    "createdAt": "2026-06-30T10:00:00.000Z",
+    "updatedAt": "2026-06-30T10:00:00.000Z"
+  },
+  {
+    "_id": "user-rahul-id",
+    "name": "Rahul",
+    "email": "rahul@meeting.com",
+    "password": "password",
+    "createdAt": "2026-06-30T10:00:00.000Z",
+    "updatedAt": "2026-06-30T10:00:00.000Z"
+  },
+  {
+    "_id": "xfltxrcmr0y4htf",
+    "createdAt": "2026-06-30T17:54:09.843Z",
+    "updatedAt": "2026-06-30T17:54:09.843Z",
+    "name": "Shweta Keshari",
+    "email": "shwetakeshrwani92@gmail.com",
+    "password": "shweta231@"
+  },
+  {
+    "_id": "f4229u8mr0yp54i",
+    "createdAt": "2026-06-30T18:10:13.170Z",
+    "updatedAt": "2026-06-30T18:10:13.170Z",
+    "name": "Shweta Keshari",
+    "email": "demo@aimeeting.com",
+    "password": "demo123"
+  },
+  {
+    "_id": "vuyzeidmr20bf45",
+    "createdAt": "2026-07-01T11:43:18.341Z",
+    "updatedAt": "2026-07-01T11:43:18.343Z",
+    "name": "shweta",
+    "email": "shweta@gmail.com",
+    "password": "1234"
+  }
+]

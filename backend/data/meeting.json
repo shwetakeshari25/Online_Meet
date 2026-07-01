@@ -1,0 +1,531 @@
+[
+  {
+    "_id": "meet-sync-1234",
+    "roomId": "f2d8-91c2",
+    "host": "Aman",
+    "agenda": "Weekly Sync & Project Roadmap",
+    "summary": "The team discussed the weekly project update. Development is on track and testing is currently in progress. Sneha flagged a potential delay in the design phase due to client mockups. Aman will prepare the roadmap presentation and share it tomorrow.",
+    "score": 8.6,
+    "isCompleted": true,
+    "createdAt": "2026-06-27T10:30:00.000Z",
+    "updatedAt": "2026-06-27T11:00:00.000Z",
+    "participants": [
+      {
+        "name": "Aman",
+        "device": "Desktop/Laptop",
+        "micSwitches": 1,
+        "camSwitches": 1
+      },
+      {
+        "name": "Priya",
+        "device": "Desktop/Laptop",
+        "micSwitches": 2,
+        "camSwitches": 0
+      },
+      {
+        "name": "Rahul",
+        "device": "Mobile/Phone",
+        "micSwitches": 4,
+        "camSwitches": 2
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "Aman",
+        "message": "Good morning everyone, let's start the weekly sync.",
+        "timestamp": "10:30:05 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Priya",
+        "message": "Development is on track. We are finalizing the core modules and starting the integration test.",
+        "timestamp": "10:32:15 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Rahul",
+        "message": "Yes, testing is in progress and we should have the first QA report by Friday.",
+        "timestamp": "10:33:40 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Sneha",
+        "message": "We might face some delays in the design phase. I need feedback on the payment layout.",
+        "timestamp": "10:35:10 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Aman",
+        "message": "I will prepare the project roadmap and share it with the team tomorrow.",
+        "timestamp": "10:38:20 AM",
+        "isSpeech": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "task-roadmap-111",
+        "title": "Prepare project roadmap and share with team",
+        "assignee": "Aman"
+      },
+      {
+        "id": "task-design-222",
+        "title": "Finalize design mockups and payment layout feedback",
+        "assignee": "Sneha"
+      }
+    ]
+  },
+  {
+    "_id": "meet-design-5678",
+    "roomId": "wzw-uvwy",
+    "host": "Sneha",
+    "agenda": "Design Feedback Session",
+    "summary": "Priya and Sneha reviewed the feedback from client on the user login visual aesthetics. Aligned on transition color settings. Completed successfully.",
+    "score": 9.2,
+    "isCompleted": true,
+    "createdAt": "2026-06-29T14:00:00.000Z",
+    "updatedAt": "2026-06-29T14:45:00.000Z",
+    "participants": [
+      {
+        "name": "Sneha",
+        "device": "Desktop/Laptop",
+        "micSwitches": 2,
+        "camSwitches": 2
+      },
+      {
+        "name": "Priya",
+        "device": "Desktop/Laptop",
+        "micSwitches": 1,
+        "camSwitches": 1
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "Sneha",
+        "message": "I want to review the login visual design. The client preferred cream-yellow.",
+        "timestamp": "2:02:10 PM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Priya",
+        "message": "That sounds great, let's implement the yellow variables and test compile.",
+        "timestamp": "2:05:40 PM",
+        "isSpeech": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "task-yellow-333",
+        "title": "Implement yellow variables and rebuild client bundle",
+        "assignee": "Priya"
+      }
+    ]
+  },
+  {
+    "_id": "icw6z4nmr0ypgsj",
+    "createdAt": "2026-06-30T18:10:28.291Z",
+    "updatedAt": "2026-06-30T18:10:28.291Z",
+    "roomId": "6nud-20m8",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "lj7tfiymr0zkqvd",
+    "createdAt": "2026-06-30T18:34:47.689Z",
+    "updatedAt": "2026-06-30T18:34:47.689Z",
+    "roomId": "vvg-sbow-phq",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "mpouad4mr0zmbn5",
+    "createdAt": "2026-06-30T18:36:01.265Z",
+    "updatedAt": "2026-06-30T18:36:01.265Z",
+    "roomId": "uj23-9o1u",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "3wlyj61mr1msrra",
+    "createdAt": "2026-07-01T05:24:53.255Z",
+    "updatedAt": "2026-07-01T05:24:53.258Z",
+    "roomId": "12345",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "k1btfd5mr1og3qx",
+    "createdAt": "2026-07-01T06:11:01.497Z",
+    "updatedAt": "2026-07-01T06:11:18.206Z",
+    "roomId": "join",
+    "host": "Shweta Keshari",
+    "participants": [
+      {
+        "name": "Shweta Keshari",
+        "email": "demo@aimeeting.com",
+        "device": "Desktop/Laptop",
+        "micSwitches": 1,
+        "camSwitches": 0
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "Shweta Keshari",
+        "message": "Sir, Google Meet kabhi linked.",
+        "timestamp": "11:41:09 AM",
+        "isSpeech": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "d7c05xsmr1oggln",
+        "title": "Follow up on overall project status and feedback",
+        "assignee": "Shweta Keshari"
+      }
+    ],
+    "isCompleted": true,
+    "agenda": "General Meeting",
+    "summary": "The meeting was active with participation from Shweta Keshari. A total of 1 conversation segments were recorded and analyzed.",
+    "score": 7.5
+  },
+  {
+    "_id": "hcq845jmr1oi5dj",
+    "createdAt": "2026-07-01T06:12:36.920Z",
+    "updatedAt": "2026-07-01T06:16:22.712Z",
+    "roomId": "iqw-sknn-tap",
+    "host": "Shweta Keshari",
+    "participants": [
+      {
+        "name": "Shweta Keshari",
+        "email": "demo@aimeeting.com",
+        "device": "Desktop/Laptop",
+        "micSwitches": 4,
+        "camSwitches": 2
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "Shweta Keshari",
+        "message": "Sidiogen way link keju apni Vijay.",
+        "timestamp": "11:42:42 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Siri answers join Hogaya versus my egg problem. Kiju, Hoste or Mahmud join me.",
+        "timestamp": "11:42:55 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Obaki proper worker.",
+        "timestamp": "11:42:58 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Mike Bunsen.",
+        "timestamp": "11:43:03 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "I see.",
+        "timestamp": "11:43:19 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Hello, Sir.",
+        "timestamp": "11:43:31 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "AAP ka karev.",
+        "timestamp": "11:43:57 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Pursuit proposals for Vaas name Illaiyaa Illaiyae.",
+        "timestamp": "11:44:05 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Yes.",
+        "timestamp": "11:44:12 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Actually, please fan.",
+        "timestamp": "11:44:26 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Hello, Sir.",
+        "timestamp": "11:44:38 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Apgujeong.",
+        "timestamp": "11:44:43 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "So proper summajniraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.",
+        "timestamp": "11:44:50 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Yes, Sir.",
+        "timestamp": "11:44:53 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Seriously egg problem arises many upcoming joint.",
+        "timestamp": "11:45:09 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Or.",
+        "timestamp": "11:45:12 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Abdu hosto tu aapke pas nahi dekhra AAP naidu images.",
+        "timestamp": "11:45:16 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Skin.",
+        "timestamp": "11:45:19 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "Mercedes camera Mickey Dikara.",
+        "timestamp": "11:45:33 AM",
+        "isSpeech": true
+      },
+      {
+        "sender": "Shweta Keshari",
+        "message": "So he asked me. Link, copy, paste here. Yeah.",
+        "timestamp": "11:45:43 AM",
+        "isSpeech": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "ovc8glnmr1omzkb",
+        "title": "Follow up on overall project status and feedback",
+        "assignee": "Shweta Keshari"
+      }
+    ],
+    "isCompleted": true,
+    "agenda": "General Meeting",
+    "summary": "The meeting was active with participation from Shweta Keshari. A total of 20 conversation segments were recorded and analyzed.",
+    "score": 8.5
+  },
+  {
+    "_id": "ycp4vezmr1ond0c",
+    "createdAt": "2026-07-01T06:16:40.092Z",
+    "updatedAt": "2026-07-01T06:17:08.421Z",
+    "roomId": "bsrb-dlx3",
+    "host": "Shweta Keshari",
+    "participants": [
+      {
+        "name": "Shweta Keshari",
+        "email": "demo@aimeeting.com",
+        "device": "Desktop/Laptop",
+        "micSwitches": 2,
+        "camSwitches": 5
+      }
+    ],
+    "transcript": [],
+    "actionItems": [],
+    "isCompleted": true,
+    "agenda": "General Meeting",
+    "summary": "No discussion was recorded during the meeting.",
+    "score": 5
+  },
+  {
+    "_id": "kh716n2mr1s0qub",
+    "createdAt": "2026-07-01T07:51:03.395Z",
+    "updatedAt": "2026-07-01T07:51:03.395Z",
+    "roomId": "x15o-hpq8",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "ifmhbq8mr1s5ves",
+    "createdAt": "2026-07-01T07:55:02.597Z",
+    "updatedAt": "2026-07-01T09:41:11.900Z",
+    "roomId": "xga-aahu-etf",
+    "host": "Shweta Keshari",
+    "participants": [
+      {
+        "name": "Shweta Keshari",
+        "email": "shwetakeshrwani92@gmail.com",
+        "device": "Desktop/Laptop",
+        "micSwitches": 1,
+        "camSwitches": 3
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "System",
+        "message": "Shweta Keshari (Host) joined the meeting.",
+        "timestamp": "03:09 PM",
+        "isSpeech": false,
+        "isSystem": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "85k6v5cmr1vydyz",
+        "title": "Follow up on overall project status and feedback",
+        "assignee": "Shweta Keshari"
+      }
+    ],
+    "isCompleted": true,
+    "agenda": "General Meeting",
+    "summary": "The meeting was active with participation from System. A total of 1 conversation segments were recorded and analyzed.",
+    "score": 7.5
+  },
+  {
+    "_id": "cxdotnemr1sfgzt",
+    "createdAt": "2026-07-01T08:02:30.473Z",
+    "updatedAt": "2026-07-01T08:02:30.473Z",
+    "roomId": "m3c3-2y28",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "m6k1qsdmr1tqegn",
+    "createdAt": "2026-07-01T08:39:00.023Z",
+    "updatedAt": "2026-07-01T08:39:00.024Z",
+    "roomId": "zar9-8g9n",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "okjkoh8mr1trqp0",
+    "createdAt": "2026-07-01T08:40:02.532Z",
+    "updatedAt": "2026-07-01T08:40:02.532Z",
+    "roomId": "tnc5-wyy1",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "uwdey6xmr1vzobp",
+    "createdAt": "2026-07-01T09:42:11.941Z",
+    "updatedAt": "2026-07-01T09:42:11.941Z",
+    "roomId": "1rva-13xq",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "p6uyx20mr1zh37k",
+    "createdAt": "2026-07-01T11:19:43.232Z",
+    "updatedAt": "2026-07-01T11:19:43.232Z",
+    "roomId": "w0jf-zfwe",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "rhp4cfimr1zjyi6",
+    "createdAt": "2026-07-01T11:21:57.102Z",
+    "updatedAt": "2026-07-01T11:21:57.102Z",
+    "roomId": "ukzl-hbiw",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "i9yo3btmr1zlu2q",
+    "createdAt": "2026-07-01T11:23:24.675Z",
+    "updatedAt": "2026-07-01T11:23:24.675Z",
+    "roomId": "bg25-gl29",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "wa0rkmvmr1zoabh",
+    "createdAt": "2026-07-01T11:25:19.039Z",
+    "updatedAt": "2026-07-01T11:25:19.039Z",
+    "roomId": "2025",
+    "host": "Shweta Keshari",
+    "participants": [],
+    "transcript": [],
+    "actionItems": []
+  },
+  {
+    "_id": "btlicg4mr1zru6e",
+    "createdAt": "2026-07-01T11:28:04.742Z",
+    "updatedAt": "2026-07-01T11:33:58.154Z",
+    "roomId": "uwi-otun-swn",
+    "host": "Shweta Keshari",
+    "participants": [
+      {
+        "name": "Shweta Keshari",
+        "email": "shwetakeshrwani92@gmail.com",
+        "device": "Desktop/Laptop",
+        "micSwitches": 1,
+        "camSwitches": 1
+      }
+    ],
+    "transcript": [
+      {
+        "sender": "System",
+        "message": "Shweta Keshari (Host) joined the meeting.",
+        "timestamp": "05:00 PM",
+        "isSpeech": false,
+        "isSystem": true
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "ihns482mr1zzer8",
+        "title": "Follow up on overall project status and feedback",
+        "assignee": "Shweta Keshari"
+      }
+    ],
+    "isCompleted": true,
+    "agenda": "General Meeting",
+    "summary": "The meeting was active with participation from System. A total of 1 conversation segments were recorded and analyzed.",
+    "score": 7.5
+  }
+]
