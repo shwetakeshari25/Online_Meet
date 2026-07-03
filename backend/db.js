@@ -68,33 +68,10 @@ class JSONDBModel {
         });
     }
 
-    async findOne(query = {}) {
-        const records = this._read();
-        return records.find(item => {
-            for (const key in query) {
-                if (item[key] !== query[key]) return false;
-            }
-            return true;
-        }) || null;
-    }
-
-    async findById(id) {
-        const records = this._read();
-        return records.find(item => item._id === id || item.id === id) || null;
-    }
-
-    async create(data) {
-        const records = this._read();
-        const newRecord = {
-            _id: generateId(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            ...data
-        };
-        
-        // Add save helper to mimic mongoose document save
+    _wrapRecord(record) {
+        if (!record) return null;
         const modelInstance = this;
-        newRecord.save = async function() {
+        record.save = async function() {
             const currentRecords = modelInstance._read();
             const idx = currentRecords.findIndex(r => r._id === this._id);
             const docToWrite = { ...this };
@@ -109,10 +86,39 @@ class JSONDBModel {
             modelInstance._write(currentRecords);
             return this;
         };
+        return record;
+    }
 
-        records.push(newRecord);
+    async findOne(query = {}) {
+        const records = this._read();
+        const record = records.find(item => {
+            for (const key in query) {
+                if (item[key] !== query[key]) return false;
+            }
+            return true;
+        });
+        return this._wrapRecord(record);
+    }
+
+    async findById(id) {
+        const records = this._read();
+        const record = records.find(item => item._id === id || item.id === id);
+        return this._wrapRecord(record);
+    }
+
+    async create(data) {
+        const records = this._read();
+        const newRecord = {
+            _id: generateId(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ...data
+        };
+        
+        const wrapped = this._wrapRecord(newRecord);
+        records.push(wrapped);
         this._write(records);
-        return newRecord;
+        return wrapped;
     }
 
     async findByIdAndUpdate(id, update, options = {}) {

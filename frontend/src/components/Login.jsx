@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Video, LogIn, UserPlus, AlertCircle, Sparkles, UserCheck } from 'lucide-react';
+import { BACKEND_URL } from '../config';
 
 function Login({ onLogin, initialRoomId }) {
   const [isLoginTab, setIsLoginTab] = useState(true);
@@ -18,7 +19,7 @@ function Login({ onLogin, initialRoomId }) {
     const payload = isLoginTab ? { email, password } : { name, email, password };
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000${endpoint}`, {
+      const res = await fetch(`${BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

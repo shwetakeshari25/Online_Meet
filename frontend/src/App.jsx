@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import MeetingRoom from './components/MeetingRoom';
+import { BACKEND_URL } from './config';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -112,7 +113,7 @@ function App() {
     }
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/auth/me`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

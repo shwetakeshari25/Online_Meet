@@ -54,5 +54,29 @@
     "name": "shweta",
     "email": "shweta@gmail.com",
     "password": "1234"
+  },
+  {
+    "_id": "8hhrdykmr2zdzkq",
+    "createdAt": "2026-07-02T04:05:04.730Z",
+    "updatedAt": "2026-07-02T04:05:04.730Z",
+    "name": "happy",
+    "email": "happykeshari@gmail.com",
+    "password": "shweta"
+  },
+  {
+    "_id": "dvk36mimr4heh1m",
+    "createdAt": "2026-07-03T05:17:06.634Z",
+    "updatedAt": "2026-07-03T05:17:06.634Z",
+    "name": "shweta keshari",
+    "email": "shweta.keshari@geeksofgurukul.com",
+    "password": "shweta"
+  },
+  {
+    "_id": "lj1n9fwmr55glpy",
+    "createdAt": "2026-07-03T16:30:36.790Z",
+    "updatedAt": "2026-07-03T16:30:36.790Z",
+    "name": "Shweta Keshari",
+    "email": "happykeshari92@gmail.com",
+    "password": "shweta"
   }
 ]

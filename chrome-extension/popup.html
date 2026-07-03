@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --primary-mint: #4A7A5D;
+      --primary-gold: #FFBA00;
+      --bg-cream: #FCF8EE;
+      --bg-dark: #131A22;
+      --border-soft: rgba(74, 122, 93, 0.15);
+      --text-dark: #2F3E46;
+      --text-muted: #64748B;
+      --glass-bg: rgba(255, 255, 255, 0.8);
+    }
+    body {
+      font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+      width: 320px;
+      margin: 0;
+      padding: 16px;
+      background: var(--bg-cream);
+      color: var(--text-dark);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-soft);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .header h2 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--primary-mint);
+      margin: 0;
+    }
+    .status-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(12, 59, 46, 0.04);
+      margin-bottom: 12px;
+    }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+    .status-row:last-child {
+      margin-bottom: 0;
+    }
+    .status-value {
+      font-weight: 700;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .badge-connected {
+      background-color: #E6F4EA;
+      color: #137333;
+    }
+    .badge-disconnected {
+      background-color: #FCE8E6;
+      color: #C5221F;
+    }
+    .config-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .config-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 0.8rem;
+      color: var(--primary-mint);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .input-group {
+      display: flex;
+      gap: 6px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      outline: none;
+      background: white;
+    }
+    .btn {
+      background: var(--primary-mint);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .instructions {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .instructions ol {
+      margin: 4px 0 0 0;
+      padding-left: 16px;
+    }
+    .instructions li {
+      margin-bottom: 4px;
+    }
+    .cc-alert {
+      background-color: #FEF3C7;
+      color: #D97706;
+      border-left: 3px solid #D97706;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span style="font-size: 1.3rem;">🎙️</span>
+    <h2>Online Meet Helper</h2>
+  </div>
+
+  <div class="cc-alert">
+    <span>⚠️</span>
+    <span><strong>Active CC Required</strong>: Turn on captions (CC) in Meet/Zoom to sync speaking logs.</span>
+  </div>
+
+  <div class="status-card">
+    <div class="status-row">
+      <span>Status:</span>
+      <span id="connectionStatus" class="status-badge badge-disconnected">Checking...</span>
+    </div>
+    <div class="status-row">
+      <span>Active Room ID:</span>
+      <span id="activeRoomId" class="status-value">-</span>
+    </div>
+    <div class="status-row">
+      <span>Caption Listener:</span>
+      <span id="captionListener" class="status-value">Inactive</span>
+    </div>
+  </div>
+
+  <div class="config-card">
+    <h3>Server Configuration</h3>
+    <div class="input-group">
+      <input type="text" id="serverUrlInput" class="input-field" placeholder="http://localhost:5000">
+      <button id="saveBtn" class="btn">Save & Sync</button>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <strong>Quick Instructions:</strong>
+    <ol>
+      <li>Enter your server URL and save.</li>
+      <li>Open Google Meet or Zoom web client.</li>
+      <li>The extension connects to the room in the background automatically.</li>
+    </ol>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

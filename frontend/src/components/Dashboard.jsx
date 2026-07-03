@@ -3,9 +3,11 @@ import {
   Video, Plus, ArrowRight, Sparkles, History, 
   CheckSquare, BarChart2, LogOut, Copy, Check, 
   Clock, ClipboardList, Calendar, Smartphone, Laptop, 
-  Activity, PlusCircle
+  Activity, PlusCircle, MessageSquare, ChevronDown, 
+  ChevronUp, Mic, VideoOff
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { BACKEND_URL } from '../config';
 
 function Dashboard({ user, onLogout, onJoinMeeting }) {
   const [activeSection, setActiveSection] = useState('home');
@@ -30,6 +32,22 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
   const [copiedId, setCopiedId] = useState('');
   const [newReminderText, setNewReminderText] = useState('');
   const [newReminderTime, setNewReminderTime] = useState('');
+  const [expandedTranscripts, setExpandedTranscripts] = useState({});
+
+  const toggleTranscript = (meetId) => {
+    setExpandedTranscripts(prev => ({
+      ...prev,
+      [meetId]: !prev[meetId]
+    }));
+  };
+
+  const formatDuration = (sec) => {
+    if (!sec) return '0s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   // Refs for sections to handle scrolling and intersection observing
   const containerRef = useRef(null);
@@ -87,7 +105,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/meetings/history`, {
+      const res = await fetch(`${BACKEND_URL}/api/meetings/history`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -118,7 +136,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/tasks`, {
+      const res = await fetch(`${BACKEND_URL}/api/tasks`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -142,7 +160,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
 
   const handleCreateMeeting = async () => {
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/meetings/create`, {
+      const res = await fetch(`${BACKEND_URL}/api/meetings/create`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -202,7 +220,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
     setAgendaLoading(true);
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/ai/agenda`, {
+      const res = await fetch(`${BACKEND_URL}/api/ai/agenda`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -229,7 +247,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
     const nextStatus = currentStatus === 'pending' ? 'completed' : 'pending';
     
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/tasks/${taskId}`, {
+      const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -288,6 +306,33 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
     setReminders(updated);
     localStorage.setItem('meeting_reminders', JSON.stringify(updated));
   };
+
+  // Calculate real insights from meeting history
+  const completedMeetings = meetingsHistory.filter(m => m.isCompleted);
+  
+  // 1. Avg Score
+  const totalScore = completedMeetings.reduce((acc, m) => acc + (m.score || 0), 0);
+  const avgScore = completedMeetings.length > 0 
+    ? (totalScore / completedMeetings.length).toFixed(1) 
+    : 'N/A';
+
+  // 2. Device Stats
+  let laptopCount = 0;
+  let mobileCount = 0;
+  completedMeetings.forEach(m => {
+    if (m.participants) {
+      m.participants.forEach(p => {
+        if (p.device === 'Mobile/Phone') {
+          mobileCount++;
+        } else {
+          laptopCount++;
+        }
+      });
+    }
+  });
+  const totalDevices = laptopCount + mobileCount;
+  const laptopPct = totalDevices > 0 ? Math.round((laptopCount / totalDevices) * 100) : 100;
+  const mobilePct = totalDevices > 0 ? Math.round((mobileCount / totalDevices) * 100) : 0;
 
   return (
     <div className="bg-cream-grad" style={{ minHeight: '100vh', position: 'relative' }}>
@@ -516,7 +561,9 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
               </div>
             ) : (
               <div className="dashboard-inner-scroll flex-col gap-4" style={{ display: 'flex' }}>
-                {meetingsHistory.map((meet) => (
+                {[...meetingsHistory]
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .map((meet) => (
                   <div key={meet._id} className="glass-panel" style={{ padding: '24px' }}>
                     <div className="flex-row items-center justify-between pb-4 border-soft" style={{ display: 'flex', borderBottom: '1px solid var(--border-soft)', marginBottom: '16px' }}>
                       <div>
@@ -531,28 +578,92 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6" style={{ fontSize: '0.75rem' }}>
-                      <div style={{ gridColumn: 'span 2' }}>
+                    <div className="flex-col gap-4" style={{ display: 'flex', fontSize: '0.75rem' }}>
+                      <div>
                         <h4 className="form-label" style={{ marginBottom: '8px' }}>AI Summary</h4>
                         <p className="bg-cream-grad border-soft" style={{ padding: '12px', borderRadius: '10px', color: 'var(--primary-mint)', fontWeight: '500', lineHeight: '1.5' }}>
                           {meet.summary}
                         </p>
                       </div>
 
-                      <div>
-                        <h4 className="form-label" style={{ marginBottom: '8px' }}>Participant Toggles</h4>
-                        <div className="bg-green-accent border-soft flex-col gap-2" style={{ display: 'flex', padding: '12px', borderRadius: '10px' }}>
+                      <div style={{ marginTop: '4px' }}>
+                        <h4 className="form-label" style={{ marginBottom: '8px' }}>Participant Hardware Analytics</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" style={{ fontSize: '0.7rem' }}>
                           {meet.participants && meet.participants.map((p, idx) => (
-                            <div key={idx} className="flex-row justify-between items-center" style={{ display: 'flex', fontSize: '0.7rem', paddingBottom: '6px', borderBottom: '1px solid rgba(74,122,93,0.1)' }}>
-                              <span style={{ fontWeight: 700 }}>{p.name}</span>
-                              <div className="flex-row gap-2" style={{ display: 'flex' }}>
-                                <span style={{ backgroundColor: 'var(--bg-yellow-light)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border-soft)', fontSize: '0.6rem' }}>Mic: {p.micSwitches}</span>
-                                <span style={{ backgroundColor: 'var(--bg-yellow-light)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border-soft)', fontSize: '0.6rem' }}>Cam: {p.camSwitches}</span>
+                            <div key={idx} className="bg-green-accent border-soft" style={{ padding: '12px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div className="flex-row justify-between items-center" style={{ display: 'flex', borderBottom: '1px solid rgba(74,122,93,0.1)', paddingBottom: '3px' }}>
+                                <strong style={{ color: 'var(--primary-mint)' }}>{p.name}</strong>
+                                <span className="flex-row items-center gap-1" style={{ display: 'flex', fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                                  {p.device === 'Mobile/Phone' ? <Smartphone style={{ width: '10px', height: '10px' }} /> : <Laptop style={{ width: '10px', height: '10px' }} />}
+                                  {p.device || 'Desktop/Laptop'}
+                                </span>
+                              </div>
+                              <div className="flex-col gap-1" style={{ display: 'flex', fontSize: '0.65rem' }}>
+                                <div className="flex-row justify-between" style={{ display: 'flex' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>🎙️ Mic Toggles:</span>
+                                  <strong>{p.micSwitches || 0} times</strong>
+                                </div>
+                                <div className="flex-row justify-between" style={{ display: 'flex' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>🎙️ Active Time:</span>
+                                  <strong>{formatDuration(p.micOnDuration)}</strong>
+                                </div>
+                                <div className="flex-row justify-between" style={{ display: 'flex' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>🎙️ Muted Time:</span>
+                                  <strong>{formatDuration(p.micOffDuration || 0)}</strong>
+                                </div>
+                                <div className="flex-row justify-between" style={{ display: 'flex', borderTop: '1px dashed rgba(74,122,93,0.1)', paddingTop: '2px', marginTop: '2px' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>📷 Cam Active:</span>
+                                  <strong>{formatDuration(p.camOnDuration)}</strong>
+                                </div>
+                                <div className="flex-row justify-between" style={{ display: 'flex' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>📷 Cam Inactive:</span>
+                                  <strong>{formatDuration(p.camOffDuration || 0)}</strong>
+                                </div>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
+
+                      {/* Collapsible Transcript Dialogue Log */}
+                      {meet.transcript && meet.transcript.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          <button 
+                            onClick={() => toggleTranscript(meet._id)} 
+                            className="btn-secondary flex-row items-center justify-between"
+                            style={{ display: 'flex', width: '100%', padding: '10px 16px', fontSize: '0.75rem', borderRadius: '10px' }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
+                              <MessageSquare style={{ width: '14px', height: '14px', color: 'var(--primary-mint)' }} /> 
+                              {expandedTranscripts[meet._id] ? 'Hide Meeting Chat Transcript Timeline' : 'View Full Group Chat & Transcript Timeline'}
+                            </span>
+                            {expandedTranscripts[meet._id] ? <ChevronUp style={{ width: '14px', height: '14px' }} /> : <ChevronDown style={{ width: '14px', height: '14px' }} />}
+                          </button>
+                          
+                          {expandedTranscripts[meet._id] && (
+                            <div className="bg-green-accent border-soft flex-col gap-2 chat-message-scroller" style={{ display: 'flex', marginTop: '10px', padding: '16px', borderRadius: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                              {meet.transcript.map((msg, idx) => (
+                                msg.isSystem ? (
+                                  <div key={idx} style={{ textAlign: 'center', margin: '4px 0', fontSize: '0.68rem', color: 'var(--accent-olive)', fontStyle: 'italic' }}>
+                                    — {msg.message} —
+                                  </div>
+                                ) : (
+                                  <div key={idx} style={{ fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: '6px', borderBottom: '1px solid rgba(74,122,93,0.1)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                      <strong style={{ color: 'var(--primary-mint)' }}>
+                                        {msg.sender} 
+                                        {msg.isSpeech && <span style={{ fontSize: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', marginLeft: '6px', backgroundColor: 'rgba(74,122,93,0.06)', padding: '1px 3px', borderRadius: '2px' }}>Voice</span>}
+                                      </strong>
+                                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{msg.timestamp}</span>
+                                    </div>
+                                    <span style={{ color: 'var(--text-dark)' }}>{msg.message}</span>
+                                  </div>
+                                )
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -650,13 +761,13 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
                   <div className="glass-panel text-center" style={{ padding: '20px' }}>
                     <Activity style={{ width: '24px', height: '24px', margin: '0 auto 8px auto', color: 'var(--primary-mint)' }} />
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', display: 'block' }}>Average Meeting Score</span>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-mint)', marginTop: '4px', display: 'block' }}>8.6/10.0</span>
-                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Top 15% in organization</span>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-mint)', marginTop: '4px', display: 'block' }}>{avgScore === 'N/A' ? 'N/A' : `${avgScore}/10.0`}</span>
+                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Calculated from actual history</span>
                   </div>
                   <div className="glass-panel text-center" style={{ padding: '20px' }}>
                     <History style={{ width: '24px', height: '24px', margin: '0 auto 8px auto', color: 'var(--primary-mint)' }} />
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', display: 'block' }}>Total Hosted Calls</span>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-mint)', marginTop: '4px', display: 'block' }}>{meetingsHistory.length || 1}</span>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-mint)', marginTop: '4px', display: 'block' }}>{completedMeetings.length}</span>
                     <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>All logs and data stored</span>
                   </div>
                 </div>
@@ -670,7 +781,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
                         <Laptop style={{ width: '24px', height: '24px' }} />
                       </div>
                       <div style={{ fontSize: '0.75rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>78%</span>
+                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{laptopPct}%</span>
                         <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.65rem' }}>Desktop / Laptop</span>
                       </div>
                     </div>
@@ -680,7 +791,7 @@ function Dashboard({ user, onLogout, onJoinMeeting }) {
                         <Smartphone style={{ width: '24px', height: '24px' }} />
                       </div>
                       <div style={{ fontSize: '0.75rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>22%</span>
+                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{mobilePct}%</span>
                         <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.65rem' }}>Mobile / Phone</span>
                       </div>
                     </div>

@@ -685,3 +685,38 @@ p {
 .pulse-active {
   animation: pulseGlow 2.5s infinite ease-in-out;
 }
+
+@keyframes pulseAvatar {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 242, 178, 0.4);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 15px rgba(0, 242, 178, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 242, 178, 0);
+  }
+}
+
+.pulse-avatar {
+  animation: pulseAvatar 2s infinite ease-in-out;
+}
+
+/* Interactive Device Badge */
+.hover-btn-pulse {
+  transition: all 0.2s ease;
+}
+
+.hover-btn-pulse:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(74, 122, 93, 0.15);
+  background-color: var(--primary-mint) !important;
+  color: white !important;
+}
+
+.hover-btn-pulse:active {
+  transform: translateY(1px) scale(0.96);
+}

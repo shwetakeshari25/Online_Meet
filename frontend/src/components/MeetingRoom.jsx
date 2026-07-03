@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { BACKEND_URL } from '../config';
 import { 
   Mic, MicOff, Video as Cam, VideoOff, PhoneOff, 
   Share2, MessageSquare, BarChart2, Globe, Sparkles, 
@@ -37,7 +38,11 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
 
   // Hardware Active Duration tracking
   const [micOnDuration, setMicOnDuration] = useState(0);
+  const [micOffDuration, setMicOffDuration] = useState(0);
   const [camOnDuration, setCamOnDuration] = useState(0);
+  const [camOffDuration, setCamOffDuration] = useState(0);
+  const [micOnCount, setMicOnCount] = useState(1); // Mic starts enabled
+  const [micOffCount, setMicOffCount] = useState(0);
 
   // Speech Recognition Language state
   const [speechLang, setSpeechLang] = useState('en-US');
@@ -48,6 +53,7 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
   const [remoteStreams, setRemoteStreams] = useState({});
   const recognitionRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const endTimeoutRef = useRef(null);
 
   // 1. Detect Device Type on load
   useEffect(() => {
@@ -176,7 +182,7 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
   useEffect(() => {
     if (!localStream) return;
 
-    const newSocket = io(`http://${window.location.hostname}:5000`);
+    const newSocket = io(BACKEND_URL);
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -308,6 +314,10 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
     });
 
     newSocket.on('meeting-ended-report', (report) => {
+      if (endTimeoutRef.current) {
+        clearTimeout(endTimeoutRef.current);
+        endTimeoutRef.current = null;
+      }
       setReportData(report);
       setShowReport(true);
       confetti({
@@ -322,6 +332,9 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
       newSocket.disconnect();
       Object.values(peersRef.current).forEach(pc => pc.close());
       peersRef.current = {};
+      if (endTimeoutRef.current) {
+        clearTimeout(endTimeoutRef.current);
+      }
     };
   }, [localStream]);
 
@@ -345,9 +358,13 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
     const timer = setInterval(() => {
       if (micEnabled) {
         setMicOnDuration(prev => prev + 1);
+      } else {
+        setMicOffDuration(prev => prev + 1);
       }
       if (camEnabled) {
         setCamOnDuration(prev => prev + 1);
+      } else {
+        setCamOffDuration(prev => prev + 1);
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -357,14 +374,30 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
   useEffect(() => {
     if (!socket || !isAdmitted) return;
     const syncTimer = setInterval(() => {
-      socket.emit('update-durations', { roomId, micOnDuration, camOnDuration });
+      socket.emit('update-durations', { 
+        roomId, 
+        micOnDuration, 
+        micOffDuration, 
+        camOnDuration, 
+        camOffDuration,
+        micOnCount,
+        micOffCount
+      });
     }, 5000);
 
     return () => {
       clearInterval(syncTimer);
-      socket.emit('update-durations', { roomId, micOnDuration, camOnDuration });
+      socket.emit('update-durations', { 
+        roomId, 
+        micOnDuration, 
+        micOffDuration, 
+        camOnDuration, 
+        camOffDuration,
+        micOnCount,
+        micOffCount
+      });
     };
-  }, [socket, isAdmitted, roomId, micOnDuration, camOnDuration]);
+  }, [socket, isAdmitted, roomId, micOnDuration, micOffDuration, camOnDuration, camOffDuration, micOnCount, micOffCount]);
 
   // Helper to format raw duration seconds
   const formatDuration = (sec) => {
@@ -448,6 +481,16 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
     const nextVal = !micEnabled;
     setMicEnabled(nextVal);
     
+    let currentOnCount = micOnCount;
+    let currentOffCount = micOffCount;
+    if (nextVal) {
+      currentOnCount = micOnCount + 1;
+      setMicOnCount(currentOnCount);
+    } else {
+      currentOffCount = micOffCount + 1;
+      setMicOffCount(currentOffCount);
+    }
+
     if (localStream) {
       localStream.getAudioTracks().forEach(track => {
         track.enabled = nextVal;
@@ -466,6 +509,16 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
 
     if (socket) {
       socket.emit('toggle-media', { roomId, type: 'mic', enabled: nextVal });
+      // Sync immediately on click
+      socket.emit('update-durations', { 
+        roomId, 
+        micOnDuration, 
+        micOffDuration, 
+        camOnDuration, 
+        camOffDuration,
+        micOnCount: currentOnCount,
+        micOffCount: currentOffCount
+      });
     }
   };
 
@@ -481,6 +534,16 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
 
     if (socket) {
       socket.emit('toggle-media', { roomId, type: 'cam', enabled: nextVal });
+      // Sync immediately on click
+      socket.emit('update-durations', { 
+        roomId, 
+        micOnDuration, 
+        micOffDuration, 
+        camOnDuration, 
+        camOffDuration,
+        micOnCount,
+        micOffCount
+      });
     }
   };
 
@@ -499,12 +562,15 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
   const handleEndOrLeave = () => {
     if (socket && socket.connected) {
       socket.emit('end-meeting', { roomId });
-      // Safety timeout: if server doesn't reply with report, exit cleanly anyway after 2s
-      setTimeout(() => {
-        if (!showReport) {
-          onLeave();
-        }
-      }, 2000);
+      
+      if (endTimeoutRef.current) {
+        clearTimeout(endTimeoutRef.current);
+      }
+      
+      // Safety timeout: if server doesn't reply with report, exit cleanly anyway after 4s
+      endTimeoutRef.current = setTimeout(() => {
+        onLeave();
+      }, 4000);
     } else {
       onLeave();
     }
@@ -521,7 +587,7 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
   const handleTranslateText = async (msgId, text) => {
     setTranslatingTextId(msgId);
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/api/ai/translate`, {
+      const res = await fetch(`${BACKEND_URL}/api/ai/translate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -558,6 +624,25 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
       }
       return m;
     }));
+  };
+
+  const handleToggleParticipantDevice = (participantName, currentDevice) => {
+    const newDevice = currentDevice === 'Mobile/Phone' ? 'Desktop/Laptop' : 'Mobile/Phone';
+    if (socket && socket.connected) {
+      socket.emit('toggle-participant-device', {
+        roomId,
+        name: participantName,
+        device: newDevice
+      });
+    } else {
+      // Local fallback for offline mock simulation
+      setParticipants(prev => prev.map(p => {
+        if (p.name.toLowerCase() === participantName.toLowerCase()) {
+          return { ...p, device: newDevice };
+        }
+        return p;
+      }));
+    }
   };
 
   if (isDenied) {
@@ -736,9 +821,15 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
                   <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Camera is off</span>
                 </div>
               )}
-              <div className="video-name-overlay">
-                <span>{user.name} (You)</span>
-                {!micEnabled && <MicOff style={{ width: '14px', height: '14px', color: '#EF4444' }} />}
+              <div className="video-name-overlay" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 14px' }}>
+                <div className="flex-row items-center gap-2" style={{ display: 'flex' }}>
+                  <span style={{ fontWeight: 'bold' }}>{user.name} (You)</span>
+                  {!micEnabled && <MicOff style={{ width: '14px', height: '14px', color: '#EF4444' }} />}
+                </div>
+                <div style={{ fontSize: '0.62rem', opacity: 0.85, display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <span>🎙️ ON: {formatDuration(micOnDuration)} | OFF: {formatDuration(micOffDuration)}</span>
+                  <span>📷 ON: {formatDuration(camOnDuration)} | OFF: {formatDuration(camOffDuration)}</span>
+                </div>
               </div>
               <div className="video-device-overlay">{deviceType}</div>
             </div>
@@ -746,40 +837,86 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
             {/* Remote User Cards */}
             {participants.filter(p => p.socketId !== socket?.id).map((peer) => {
               const remoteStream = remoteStreams[peer.socketId];
+              const isMock = peer.isMock;
+              const displayInitials = peer.name ? peer.name.substring(0, 2).toUpperCase() : 'P';
+              
               return (
                 <div key={peer.socketId} className={`video-card ${peer.micEnabled ? 'active-speaker' : ''}`}>
-                  {remoteStream ? (
-                    <video
-                      autoPlay
-                      playsInline
-                      ref={(el) => {
-                        if (el && el.srcObject !== remoteStream) {
-                          el.srcObject = remoteStream;
-                        }
-                      }}
-                      className="video-stream-elem"
-                    />
+                  {isMock ? (
+                    // Simulated Mock Participant View
+                    peer.camEnabled ? (
+                      <div className="flex-col items-center justify-center simulated-cam-active" style={{ display: 'flex', position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', color: 'white', gap: '12px' }}>
+                        <div 
+                          className={`flex-row items-center justify-center border-soft ${peer.micEnabled ? 'pulse-avatar' : ''}`} 
+                          style={{ 
+                            display: 'flex', 
+                            height: '80px', 
+                            width: '80px', 
+                            borderRadius: '50%', 
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                            border: `3px solid ${peer.micEnabled ? 'var(--primary-mint)' : 'var(--border-soft)'}`,
+                            color: 'var(--primary-mint)', 
+                            fontSize: '2rem', 
+                            fontWeight: 'bold',
+                            boxShadow: peer.micEnabled ? '0 0 20px rgba(0, 242, 178, 0.3)' : 'none',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          {displayInitials}
+                        </div>
+                        <span style={{ fontSize: '0.7rem', color: '#38BDF8', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 600 }}>Simulated Video Stream</span>
+                      </div>
+                    ) : (
+                      <div className="flex-col items-center justify-center" style={{ display: 'flex', position: 'absolute', inset: 0, backgroundColor: '#131A22', color: 'white', gap: '8px' }}>
+                        <div className="flex-row items-center justify-center border-soft" style={{ display: 'flex', height: '64px', width: '64px', borderRadius: '50%', backgroundColor: '#1E293B', color: '#94A3B8', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                          {displayInitials}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Camera is off</span>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex-col items-center justify-center" style={{ display: 'flex', position: 'absolute', inset: 0, backgroundColor: '#131A22', color: 'white', gap: '8px' }}>
-                      <div className="flex-row items-center justify-center border-soft" style={{ display: 'flex', height: '64px', width: '64px', borderRadius: '50%', backgroundColor: '#1E293B', color: 'var(--primary-mint)', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        {peer.name ? peer.name.substring(0, 2).toUpperCase() : 'P'}
-                      </div>
-                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Negotiating stream...</span>
-                    </div>
+                    // Regular WebRTC Participant View
+                    <>
+                      {remoteStream ? (
+                        <video
+                          autoPlay
+                          playsInline
+                          ref={(el) => {
+                            if (el && el.srcObject !== remoteStream) {
+                              el.srcObject = remoteStream;
+                            }
+                          }}
+                          className="video-stream-elem"
+                        />
+                      ) : (
+                        <div className="flex-col items-center justify-center" style={{ display: 'flex', position: 'absolute', inset: 0, backgroundColor: '#131A22', color: 'white', gap: '8px' }}>
+                          <div className="flex-row items-center justify-center border-soft" style={{ display: 'flex', height: '64px', width: '64px', borderRadius: '50%', backgroundColor: '#1E293B', color: 'var(--primary-mint)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                            {displayInitials}
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Negotiating stream...</span>
+                        </div>
+                      )}
+                      
+                      {!peer.camEnabled && (
+                        <div className="flex-col items-center justify-center" style={{ display: 'flex', position: 'absolute', inset: 0, backgroundColor: '#131A22', color: 'white', gap: '8px' }}>
+                          <div className="flex-row items-center justify-center border-soft" style={{ display: 'flex', height: '64px', width: '64px', borderRadius: '50%', backgroundColor: '#1E293B', color: 'var(--primary-mint)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                            {displayInitials}
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Camera is off</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   
-                  {!peer.camEnabled && (
-                    <div className="flex-col items-center justify-center" style={{ display: 'flex', position: 'absolute', inset: 0, backgroundColor: '#131A22', color: 'white', gap: '8px' }}>
-                      <div className="flex-row items-center justify-center border-soft" style={{ display: 'flex', height: '64px', width: '64px', borderRadius: '50%', backgroundColor: '#1E293B', color: 'var(--primary-mint)', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        {peer.name ? peer.name.substring(0, 2).toUpperCase() : 'P'}
-                      </div>
-                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Camera is off</span>
+                  <div className="video-name-overlay" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 14px' }}>
+                    <div className="flex-row items-center gap-2" style={{ display: 'flex' }}>
+                      <span style={{ fontWeight: 'bold' }}>{peer.name} {isMock && <span style={{ fontSize: '0.65rem', backgroundColor: 'rgba(255,186,0,0.2)', color: 'var(--primary-gold)', padding: '1px 6px', borderRadius: '4px' }}>Mock</span>}</span>
+                      {!peer.micEnabled && <MicOff style={{ width: '14px', height: '14px', color: '#EF4444' }} />}
                     </div>
-                  )}
-                  
-                  <div className="video-name-overlay">
-                    <span>{peer.name}</span>
-                    {!peer.micEnabled && <MicOff style={{ width: '14px', height: '14px', color: '#EF4444' }} />}
+                    <div style={{ fontSize: '0.62rem', opacity: 0.85, display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                      <span>🎙️ ON: {formatDuration(peer.micOnDuration)} | OFF: {formatDuration(peer.micOffDuration || 0)}</span>
+                      <span>📷 ON: {formatDuration(peer.camOnDuration)} | OFF: {formatDuration(peer.camOffDuration || 0)}</span>
+                    </div>
                   </div>
                   <div className="video-device-overlay">{peer.device}</div>
                 </div>
@@ -790,6 +927,30 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
 
         {/* Floating Meeting Controls Dock */}
         <div className="controls-dock">
+          <select 
+            value={speechLang} 
+            onChange={(e) => setSpeechLang(e.target.value)} 
+            className="dock-btn"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.95)', 
+              border: '1px solid var(--border-soft)', 
+              borderRadius: '10px', 
+              padding: '0 8px', 
+              fontSize: '0.65rem', 
+              fontWeight: '800',
+              outline: 'none',
+              cursor: 'pointer',
+              color: 'var(--primary-mint)',
+              width: '85px',
+              height: '40px',
+              textAlign: 'center'
+            }}
+            title="Choose speech recognition language"
+          >
+            <option value="en-US">🇬🇧 English</option>
+            <option value="hi-IN">🇮🇳 हिन्दी</option>
+          </select>
+
           <button 
             onClick={handleToggleMic} 
             className={`dock-btn ${!micEnabled ? 'muted-off' : ''}`}
@@ -931,32 +1092,94 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
         {/* TAB 2: MEETING STATISTICS */}
         {activeTab === 'stats' && (
           <div className="flex-1" style={{ overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.75rem' }}>
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderBottom: '1px solid var(--border-soft)', paddingBottom: '10px' }}>Participant Hardware Statistics</h3>
+            <div className="flex-row justify-between items-center" style={{ display: 'flex', borderBottom: '1px solid var(--border-soft)', paddingBottom: '10px' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0 }}>Participant Hardware Statistics</h3>
+              {!participants.some(p => p.isMock) && (
+                <button 
+                  onClick={() => socket && socket.emit('start-demo-simulation')}
+                  className="btn-primary"
+                  style={{ padding: '6px 12px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', borderRadius: '8px' }}
+                >
+                  <Sparkles style={{ width: '12px', height: '12px' }} /> Simulate Demo (Mock Data)
+                </button>
+              )}
+            </div>
+
+            {/* Instruction helper to load Chrome Extension */}
+            <div className="glass-panel border-soft" style={{ padding: '12px 16px', backgroundColor: 'rgba(74, 122, 93, 0.05)', borderRadius: '10px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.9rem' }}>🔌</span>
+                <span style={{ fontWeight: 800, color: 'var(--primary-mint)' }}>How to sync real meeting data:</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                To track actual Google Meet or Zoom calls, load the unpacked extension in <strong style={{ color: 'var(--text-dark)' }}>chrome://extensions</strong> from: <code style={{ background: '#E6ECE5', padding: '2px 4px', borderRadius: '4px' }}>c:\Users\shwet\OneDrive\Desktop\Online_Meet\chrome-extension</code>.
+                Then, join your Meet/Zoom call and <strong style={{ color: 'var(--text-dark)' }}>turn on Captions (CC)</strong>. It will automatically detect actual participants, mic/cam states, and conversations!
+              </p>
+            </div>
             
             <div className="flex-col gap-4" style={{ display: 'flex' }}>
-              {participants.map((p, idx) => (
+              {participants.filter(p => p.isOnline !== false).map((p, idx) => (
                 <div key={idx} className="glass-panel bg-yellow-light flex-col gap-3" style={{ display: 'flex', padding: '16px' }}>
                   <div className="flex-row justify-between items-center" style={{ display: 'flex' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--primary-mint)' }}>{p.name}</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--primary-mint)' }}>{p.name} {p.socketId === socket?.id && '(You)'}</span>
                       {p.email && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{p.email}</span>}
                     </div>
-                    <span className="flex-row items-center gap-1 bg-green-accent border-soft" style={{ display: 'flex', fontSize: '0.7rem', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: '4px' }}>
+                    <button 
+                      onClick={() => handleToggleParticipantDevice(p.name, p.device)}
+                      className="flex-row items-center gap-1 bg-green-accent border-soft hover-btn-pulse" 
+                      style={{ 
+                        display: 'flex', 
+                        fontSize: '0.68rem', 
+                        color: 'var(--primary-mint)', 
+                        padding: '4px 10px', 
+                        borderRadius: '8px', 
+                        cursor: 'pointer',
+                        border: '1.5px solid var(--border-soft)',
+                        background: 'var(--bg-green-light)',
+                        fontWeight: 800,
+                        transition: 'all 0.2s ease',
+                        outline: 'none'
+                      }}
+                      title="Click to toggle device type"
+                    >
                       {p.device === 'Mobile/Phone' ? <Smartphone style={{ width: '12px', height: '12px' }} /> : <Laptop style={{ width: '12px', height: '12px' }} />}
                       {p.device}
-                    </span>
+                      <span style={{ fontSize: '0.55rem', opacity: 0.6, marginLeft: '3px' }}>🔄</span>
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2" style={{ marginTop: '4px' }}>
-                    <div className="bg-cream-grad border-soft" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Mic Toggles</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary-mint)' }}>{p.micSwitches}</span>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>Active: {formatDuration(p.micOnDuration)}</span>
+                    <div className="bg-cream-grad border-soft" style={{ padding: '8px', borderRadius: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-dark)', fontWeight: 700, textTransform: 'uppercase', borderBottom: '1px solid var(--border-soft)', paddingBottom: '3px', marginBottom: '4px', display: 'block' }}>🎙️ Microphone Stats</span>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Mic Toggles:</span>
+                        <strong style={{ color: 'var(--primary-mint)' }}>{p.micSwitches || 0} times</strong>
+                      </div>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem', marginTop: '4px', borderTop: '1px dashed var(--border-soft)', paddingTop: '4px' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Total ON:</span>
+                        <strong>{formatDuration(p.micOnDuration)}</strong>
+                      </div>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Total OFF:</span>
+                        <strong>{formatDuration(p.micOffDuration || 0)}</strong>
+                      </div>
                     </div>
-                    <div className="bg-cream-grad border-soft" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Cam Toggles</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary-mint)' }}>{p.camSwitches}</span>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>Active: {formatDuration(p.camOnDuration)}</span>
+                    
+                    <div className="bg-cream-grad border-soft" style={{ padding: '8px', borderRadius: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-dark)', fontWeight: 700, textTransform: 'uppercase', borderBottom: '1px solid var(--border-soft)', paddingBottom: '3px', marginBottom: '4px', display: 'block' }}>📷 Camera Stats</span>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Cam Toggles:</span>
+                        <strong style={{ color: 'var(--primary-mint)' }}>{p.camSwitches} times</strong>
+                      </div>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem', marginTop: '4px', borderTop: '1px dashed var(--border-soft)', paddingTop: '4px' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Total ON:</span>
+                        <strong>{formatDuration(p.camOnDuration)}</strong>
+                      </div>
+                      <div className="flex-row justify-between" style={{ display: 'flex', fontSize: '0.7rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Total OFF:</span>
+                        <strong>{formatDuration(p.camOffDuration || 0)}</strong>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1098,26 +1321,65 @@ function MeetingRoom({ user, roomId, isCopilotMode, onLeave }) {
 
               {/* Hardware Toggles Analytics Log */}
               <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '16px' }}>
-                <h4 className="form-label" style={{ marginBottom: '12px' }}>Participant Toggle Logs</h4>
-                <div className="grid grid-cols-3 gap-3">
+                <h4 className="form-label" style={{ marginBottom: '12px' }}>Participant Hardware Analytics</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {reportData.participants.map((p, idx) => (
-                    <div key={idx} className="bg-yellow-light border-soft text-center" style={{ padding: '12px', borderRadius: '10px' }}>
-                      <p style={{ fontWeight: 700, color: 'var(--primary-mint)' }}>{p.name}</p>
-                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px' }}>Device: {p.device}</p>
-                      <div className="flex-row justify-around" style={{ display: 'flex', marginTop: '8px', fontSize: '0.65rem' }}>
-                        <span className="bg-green-accent" style={{ padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--border-soft)', fontSize: '0.58rem', display: 'flex', flexDirection: 'column' }}>
-                          <span>Mic: {p.micSwitches}</span>
-                          <span style={{ opacity: 0.8, fontSize: '0.52rem' }}>{formatDuration(p.micOnDuration)}</span>
+                    <div key={idx} className="bg-yellow-light border-soft" style={{ padding: '12px', borderRadius: '12px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div className="flex-row justify-between items-center" style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '4px' }}>
+                        <strong style={{ color: 'var(--primary-mint)' }}>{p.name}</strong>
+                        <span className="flex-row items-center gap-1 bg-green-accent border-soft" style={{ display: 'flex', fontSize: '0.6rem', padding: '1px 6px', borderRadius: '4px' }}>
+                          {p.device === 'Mobile/Phone' ? <Smartphone style={{ width: '10px', height: '10px' }} /> : <Laptop style={{ width: '10px', height: '10px' }} />}
+                          {p.device || 'Desktop/Laptop'}
                         </span>
-                        <span className="bg-green-accent" style={{ padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--border-soft)', fontSize: '0.58rem', display: 'flex', flexDirection: 'column' }}>
-                          <span>Cam: {p.camSwitches}</span>
-                          <span style={{ opacity: 0.8, fontSize: '0.52rem' }}>{formatDuration(p.camOnDuration)}</span>
-                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2" style={{ fontSize: '0.65rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text-muted)' }}>🎙️ Mic Stats:</div>
+                          <div>Toggles: {p.micSwitches || 0} times</div>
+                          <div>Active: {formatDuration(p.micOnDuration)}</div>
+                          <div>Muted: {formatDuration(p.micOffDuration || 0)}</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text-muted)' }}>📷 Cam Stats:</div>
+                          <div>Toggles: {p.camSwitches || 0} times</div>
+                          <div>Active: {formatDuration(p.camOnDuration)}</div>
+                          <div>Inactive: {formatDuration(p.camOffDuration || 0)}</div>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* Dialogue Transcript Chat Log */}
+              {reportData.transcript && reportData.transcript.length > 0 && (
+                <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '16px' }}>
+                  <h4 className="form-label" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MessageSquare style={{ width: '16px', height: '16px', color: 'var(--primary-mint)' }} /> Group Chat & Voice Transcript
+                  </h4>
+                  <div className="bg-yellow-light border-soft flex-col gap-2 chat-message-scroller" style={{ display: 'flex', padding: '16px', borderRadius: '14px', maxHeight: '180px', overflowY: 'auto' }}>
+                    {reportData.transcript.map((msg, idx) => (
+                      msg.isSystem ? (
+                        <div key={idx} style={{ textAlign: 'center', margin: '4px 0', fontSize: '0.68rem', color: 'var(--accent-olive)', fontStyle: 'italic' }}>
+                          — {msg.message} —
+                        </div>
+                      ) : (
+                        <div key={idx} style={{ fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                            <strong style={{ color: 'var(--primary-mint)' }}>
+                              {msg.sender} 
+                              {msg.isSpeech && <span style={{ fontSize: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', marginLeft: '6px', backgroundColor: 'rgba(0,0,0,0.06)', padding: '1px 3px', borderRadius: '2px' }}>Voice</span>}
+                            </strong>
+                            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{msg.timestamp}</span>
+                          </div>
+                          <span style={{ color: 'var(--text-dark)' }}>{msg.message}</span>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
 
